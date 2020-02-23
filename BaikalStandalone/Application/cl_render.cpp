@@ -40,6 +40,8 @@ THE SOFTWARE.
 #include <thread>
 #include <chrono>
 
+#include <stdlib.h>
+
 #include "Application/scene_load_utils.h"
 
 #ifdef ENABLE_DENOISER
@@ -49,7 +51,7 @@ THE SOFTWARE.
 
 namespace Baikal
 {
-    AppClRender::AppClRender(AppSettings& settings, GLuint tex) : m_tex(tex), m_output_type(Renderer::OutputType::kColor)
+    AppClRender::AppClRender(AppSettings& settings, GLuint tex) : m_tex(tex), m_output_type(Renderer::OutputType::kWorldGeometricNormal)
     {
         InitCl(settings, m_tex);
         InitScene(settings);
@@ -73,12 +75,18 @@ namespace Baikal
 
         for (std::size_t i = 0; i < m_cfgs.size(); ++i)
         {
-            const auto& device = m_cfgs[i].context.GetDevice(0);
+            auto& device = m_cfgs[i].context.GetDevice(0);
             std::cout << i << ". name: " << device.GetName()
                 << ", vendor: " << device.GetVendor()
                 << ", version: " << device.GetVersion()
                 << "\n";
         }
+
+        char envvar[1024];
+        memset(envvar, 0, 1024);
+        strcat(envvar, "BAIKAL_MODEL_NAME=");
+        strcat(envvar, settings.modelname.c_str());
+        putenv(envvar);
 
         settings.interop = false;
 
@@ -128,7 +136,7 @@ namespace Baikal
                 m_outputs[i].denoiser = m_cfgs[i].factory->CreatePostEffect(Baikal::RenderFactory<Baikal::ClwScene>::PostEffectType::kWaveletDenoiser);
             }
 #endif
-            m_cfgs[i].renderer->SetOutput(Baikal::Renderer::OutputType::kColor, m_outputs[i].output.get());
+            m_cfgs[i].renderer->SetOutput(Baikal::Renderer::OutputType::kWorldGeometricNormal, m_outputs[i].output.get());
 
             m_outputs[i].fdata.resize(settings.width * settings.height);
             m_outputs[i].udata.resize(settings.width * settings.height * 4);
@@ -582,11 +590,11 @@ namespace Baikal
 #endif
             if (type == Renderer::OutputType::kOpacity || type == Renderer::OutputType::kVisibility)
             {
-                m_cfgs[i].renderer->SetOutput(Renderer::OutputType::kColor, m_outputs[i].dummy_output.get());
+                m_cfgs[i].renderer->SetOutput(Renderer::OutputType::kWorldGeometricNormal, m_outputs[i].dummy_output.get());
             }
             else
             {
-                m_cfgs[i].renderer->SetOutput(Renderer::OutputType::kColor, nullptr);
+                m_cfgs[i].renderer->SetOutput(Renderer::OutputType::kWorldGeometricNormal, nullptr);
             }
             m_cfgs[i].renderer->SetOutput(type, m_outputs[i].output.get());
         }

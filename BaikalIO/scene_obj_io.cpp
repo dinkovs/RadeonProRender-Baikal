@@ -80,6 +80,7 @@ namespace Baikal
 
         // Try loading file
         LogInfo("Loading a scene from OBJ: ", filename, " ... ");
+        std::cout << "Loading from: " << filename << std::endl;
         std::string err;
         auto res = LoadObj(&attrib, &objshapes, &objmaterials, &err, filename.c_str(), basepath.c_str(), true);
         if (!res)
@@ -157,9 +158,18 @@ namespace Baikal
                                 vertices.push_back(attrib.vertices[3 * old_index.vertex_index + k]);
                             }
 
-                            for (int k = 0; k < 3; ++k)
+                            if (attrib.normals.size() > 0)
                             {
-                                normals.push_back(attrib.normals[3 * old_index.normal_index + k]);
+                                for (int k = 0; k < 3; ++k)
+                                {
+                                    normals.push_back(attrib.normals[3 * old_index.normal_index + k]);
+                                }
+                            }
+                            else
+                            {
+                                normals.push_back(1.0f);
+                                normals.push_back(1.0f);
+                                normals.push_back(1.0f);
                             }
 
                             for (int k = 0; k < 2; ++k)
